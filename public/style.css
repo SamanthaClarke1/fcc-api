@@ -6,6 +6,12 @@
   text-align: center;
   color: black;
 }
+.ul1 {
+  text-align: left;
+}
+.prms {
+  text-align: right;
+}
 body {
   background-color: #EAFFF0;
 }
