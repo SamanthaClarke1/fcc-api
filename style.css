@@ -1,0 +1,11 @@
+.cont1 {
+  width: 80vw;
+  margin: 5vw;
+  padding: 5vw;
+  background-color: #99E2FF;
+  text-align: center;
+  color: black;
+}
+body {
+  background-color: #EAFFF0;
+}
