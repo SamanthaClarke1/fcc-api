@@ -12,7 +12,11 @@ var app = express();
 app.use("/", express.static('public'));
 
 app.get("/", function(req, res) {
-  res.sendFile(__dirname + '/views/index.html');
+  res.sendFile(__dirname + '/views/home.html');
+});
+
+app.get("/timestamp/", function(req, res) {
+  res.sendFile(__dirname + '/views/tstamp/index.html');
 });
 
 // http://expressjs.com/en/starter/basic-routing.html
@@ -21,7 +25,7 @@ app.get("/timestamp/:a", function (req, res) {
   var ret = {"unix": null, "real": null};
   var testint = parseInt(teststr);
   
-  if(testint != NaN) teststr = testint;
+  if(!isNaN(testint)) teststr = testint;
   var testd = new Date(teststr);
   if(testd.getTime() > 0) {
     ret.unix = testd.getTime();
@@ -29,6 +33,10 @@ app.get("/timestamp/:a", function (req, res) {
   }
   
   res.end(JSON.stringify(ret));
+});
+
+app.get("/hparser/", function(req, res) {
+  
 });
 
 // listen for requests :)
