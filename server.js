@@ -16,7 +16,7 @@ app.get("/", function(req, res) {
 });
 
 // http://expressjs.com/en/starter/basic-routing.html
-app.get("/:a", function (req, res) {
+app.get("/timestamp/:a", function (req, res) {
   var teststr = req.params.a;
   var ret = {"unix": null, "real": null};
   var testint = parseInt(teststr);
