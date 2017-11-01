@@ -36,7 +36,17 @@ app.get("/timestamp/:a", function (req, res) {
 });
 
 app.get("/hparser/", function(req, res) {
+  var ret = {"system": "", "browser": ""};
+  var tarr = req.headers["user-agent"].split(/[\(\)]/);
   
+  ret["browser"] = tarr[4].split('').splice(1, tarr[4].length).join('').split(' ').join('; ');
+  ret["system"] = tarr[1];
+  ret["user-agent"] = req.headers["user-agent"];
+  ret["language"] = req.headers["accept-language"].split(";")[0];
+  ret["ip"] = req.headers["x-forwarded-for"].split(",")[0];
+  ret["protocol"] = req.headers["x-forwarded-proto"].split(",")[0];
+  
+  res.end(JSON.stringify(ret, null, 2));
 });
 
 // listen for requests :)
