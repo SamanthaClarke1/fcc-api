@@ -4,9 +4,12 @@
 var express = require('express');
 var app = express();
 
+var imageSearch = require('node-google-image-search');
+
 //lets require/import the mongodb native drivers.
 var mongodb = require('mongodb').MongoClient;
 var url = 'mongodb://guest:'+process.env.SECRET+'@ds056979.mlab.com:56979/king-fcc';  // Connection URL.
+
 
 
 function makeSlug(min, max) {
@@ -22,6 +25,12 @@ function makeSlug(min, max) {
   return t;
 }
 
+String.prototype.regexIndexOf = function(regex, startpos) {
+    var indexOf = this.substring(startpos || 0).search(regex);
+    return (indexOf >= 0) ? (indexOf + (startpos || 0)) : indexOf;
+}
+
+
 
 // Use connect method to connect to the Server
 mongodb.connect(url, function (err, db) {
@@ -30,12 +39,16 @@ mongodb.connect(url, function (err, db) {
   } else {
     console.log('Connection established to', url.replace(process.env.SECRET, "SECRETPASSWORD"));
     var shrturls = db.collection('shrturls');
+    var recentSearches = db.collection('recentsearches');
     
     app.get("/shrturl", function(req, res) {
       var longurl = req.query.shrtn;
       var urlobj = {"longurl": longurl, "shrturl": ""};
+      var mUrls = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
 
-      if(longurl && /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/.test(longurl)) {
+      if(longurl && mUrls.test(longurl)) {
+        longurl = longurl.slice(longurl.regexIndexOf(mUrls));
+        urlobj.longurl = longurl;
         var shrturl = makeSlug(4, 8);
         urlobj["shrturl"] = shrturl;
         
@@ -60,6 +73,51 @@ mongodb.connect(url, function (err, db) {
         res.redirect(longurls[0].longurl);
         res.end(longurls[0].longurl);
       });
+    });
+    
+    app.get("/imgsearch/:img", function(req, res) {
+      var offset = 0;
+      var amt = 8;
+      var page = 0;
+      if(req.query.offset) offset = req.query.offset;
+      if(req.query.amt && req.query.amt < 20) amt = req.query.amt;
+      if(req.query.page) page = req.query.page;
+      var searchterm = req.params.img;
+      
+      imageSearch(searchterm, function(results) {
+        var currentdate = new Date(); 
+        var datetime = currentdate.getDate() + "/"
+                     + (currentdate.getMonth()+1)  + "/" 
+                     + currentdate.getFullYear() + " @ "  
+                     + currentdate.getHours() + ":"  
+                     + currentdate.getMinutes() + ":" 
+                     + currentdate.getSeconds();
+        recentSearches.insert({searchterm: searchterm, time: datetime}, function(err, data) {
+          if(err) throw err;
+          var nresults = [];
+          for(var result of results) {
+            if(result.image) {
+              var nresult = {
+                              "title": result.title, 
+                              "url": result.link, 
+                              "snippit": result.snippit,
+                              "context": result.image.contextLink,
+                              "thumbnail": result.image.thumbnailLink
+                            };
+              nresults.push(nresult);
+            }
+          }
+          res.end(JSON.stringify(nresults));
+        });
+      }, page, amt);
+    });
+    app.get("/recentimgsearches/", function(req, res) {
+      var amt = 10;
+      if(req.query.amt) amt = req.query.amt;
+      recentSearches.find({}).toArray(function(err, data) {
+        if(err) throw err;
+        res.end(JSON.stringify(data));
+      }); 
     });
   }
 });
