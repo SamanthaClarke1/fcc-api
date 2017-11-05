@@ -138,8 +138,7 @@ app.get("/filelength/", function(req, res) {
 app.post('/gfilelength/', upload.single('file'), function (req, res) {
   // req.file is the test file 
   // text fields are in req.body, if there were any lmao
-  var ret = {"size": req.file.size};
-  res.end(JSON.stringify(ret));
+  res.end(JSON.stringify(req.file));
 });
 
 app.get("/timestamp/", function(req, res) {
